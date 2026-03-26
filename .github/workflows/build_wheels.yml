@@ -1,0 +1,54 @@
+# 当你把代码推送到 GitHub 时，它会自动向 GitHub 借用几台虚拟机（Windows, Linux, macOS）。
+# 在虚拟机里自动安装编译环境，执行编译。
+# 使用特殊工具（如 delvewheel），把你那个预编译包里的 ipopt.dll 强行塞进生成的 .whl 文件里。
+# 产出最终的全平台独立安装包，供用户可以直接 pip install。
+
+
+
+name: Build and Bundle Wheels
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # 允许在 GitHub 网页上手动点击运行
+
+jobs:
+  build_wheels:
+    name: Build wheels on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download and Extract IPOPT binary
+        # 云端实时下载并解压官方 IPOPT 包
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/coin-or/Ipopt/releases/download/releases%2F3.14.19/Ipopt-3.14.19-win64-msvs2022-md.zip" -OutFile "ipopt.zip"
+          Expand-Archive -Path "ipopt.zip" -DestinationPath "C:\ipopt_lib"
+
+      - name: Install build tools
+        # 安装 cibuildwheel (跨平台打包) 和 delvewheel (Windows DLL 强行捆绑工具)
+        run: python -m pip install cibuildwheel delvewheel
+
+      - name: Build and Bundle Wheels
+        env:
+          # 只针对 Python 3.11 生成 Windows 64位包 (可以省时间)
+          CIBW_BUILD: cp311-win_amd64
+          # 将解压路径通过环境变量传给 CMake
+          CIBW_ENVIRONMENT: IPOPT_DIR="C:\\ipopt_lib\\Ipopt-3.14.19-win64-msvs2022-md\\Ipopt-3.14.19-win64-msvs2022-md"
+          # 🚨 delvewheel 黑科技：把 bin 目录下的 ipopt.dll 强行塞进生成的 .whl 中！
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair --add-path C:\\ipopt_lib\\Ipopt-3.14.19-win64-msvs2022-md\\Ipopt-3.14.19-win64-msvs2022-md\\bin -w {dest_dir} {wheel}"
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyipopt-windows-wheels
+          path: ./wheelhouse/*.whl
+

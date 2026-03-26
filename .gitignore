@@ -1,0 +1,16 @@
+# 防止把本地的缓存等上传至云端
+# 编译生成文件和缓存
+build/
+dist/
+*.egg-info/
+*.pyd
+*.whl
+__pycache__/
+.pytest_cache/
+.vs/
+*.obj
+*.dll
+*.lib
+
+# 本地测试脚本
+test*.py

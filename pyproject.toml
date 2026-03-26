@@ -1,0 +1,25 @@
+# 现代 Python 打包的入口。它不碰任何编译细节，只负责和 pip 沟通。
+# 填报元数据：宣告这个包名叫 pyipopt，版本号是 0.1.0。
+# 声明构建系统：告诉 pip：“我是一个 C++ 扩展包，如果你要安装我，请先准备好 scikit-build-core 和 pybind11，
+# 然后去调用同目录下的 CMakeLists.txt 完成编译。
+
+
+
+[build-system]
+requires = ["scikit-build-core>=0.5.0", "pybind11>=2.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pyipopt"
+version = "0.1.0"
+description = "A custom pybind11 wrapper for IPOPT"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy"
+]
+
+[tool.scikit-build]
+# 让 scikit-build-core 知道去哪找 CMakeLists.txt
+cmake.version = ">=3.15"
+ninja.version = ">=1.5"
