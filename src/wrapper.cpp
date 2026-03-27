@@ -238,7 +238,7 @@ PYBIND11_MODULE(pyipopt, m) { // 创建一个名为 pyipopt 的 Python 模块（
         .def(py::init<int, int, py::array_t<double>, py::array_t<double>, py::array_t<double>,
                       py::array_t<double>, py::array_t<double>,
                       py::array_t<int>, py::array_t<int>,   // 雅可比矩阵稀疏结构
-                      py::array_t<int>, py::array_t<int>,   // 🚨 海森矩阵稀疏结构
+                      py::array_t<int>, py::array_t<int>,   // 海森矩阵稀疏结构
                       py::function, py::function, py::function, py::function, py::function>())
         
         // 绑定成员方法，把 C++ 类的成员函数，暴露给 Python 的实例对象。 后者为c++中取成员函数指针
