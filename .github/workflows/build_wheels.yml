@@ -8,41 +8,44 @@
 name: Build and Bundle Wheels
 
 on:
-  push:
+  push: # 如果 push 到了 main，就启动云端虚拟机进行打包
     branches: [ main, master ]
-  workflow_dispatch: 
+  workflow_dispatch: # 可以实现在 Actions 上不改代码手动打包
 
 jobs:
   build_wheels:
     name: Build wheels on Windows
-    runs-on: windows-latest
+    runs-on: windows-latest # 分配最新的虚拟机
 
-    steps:
+    steps: # 读取我的代码，下载到虚拟机的本地
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python # 安装 python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+        # 下载并解压 IPOPT 3.14.19
       - name: Download and Extract IPOPT binary
         run: |
           Invoke-WebRequest -Uri "https://github.com/coin-or/Ipopt/releases/download/releases%2F3.14.19/Ipopt-3.14.19-win64-msvs2022-md.zip" -OutFile "ipopt.zip"
           Expand-Archive -Path "ipopt.zip" -DestinationPath "C:\ipopt_lib"
 
+        # 安装跨平台打包仪器 cibuildwheel、把 DLL 塞进安装包的 delvewheel
       - name: Install build tools
         run: python -m pip install cibuildwheel delvewheel
 
       - name: Build and Bundle Wheels
-        env:
-          CIBW_BUILD: cp311-win_amd64
-          # 🚨 修复：云端解压是单层目录，删掉了一个重复的 \Ipopt-3.14.19-win64-msvs2022-md
+        env: # 设置环境变量
+          CIBW_BUILD: cp311-win_amd64 # ！！！！只编译 Python 3.11 的 64 位 Windows 版
+          # 把云端解压好的 IPOPT 路径告诉 CMake，让它能找到头文件和 .lib 文件
           CIBW_ENVIRONMENT: IPOPT_DIR="C:\\ipopt_lib\\Ipopt-3.14.19-win64-msvs2022-md"
-          # 🚨 修复：同样删掉 delvewheel 里的重复目录
+          # 顺着 bin 路径找到 ipopt.dll，强行把它缝合进 .whl 文件里，然后存放到 {dest_dir} 目录下。
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair --add-path C:\\ipopt_lib\\Ipopt-3.14.19-win64-msvs2022-md\\bin -w {dest_dir} {wheel}"
         run: python -m cibuildwheel --output-dir wheelhouse
 
+        # 虚拟机销毁前，把生成好的 .whl 提取出来，上传到 GitHub 的网页端
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
