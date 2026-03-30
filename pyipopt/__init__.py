@@ -1,18 +1,28 @@
 # Python 包装层，最终的 API
 import numpy as np
 import os
+import sys
+import os
+import sys
+import numpy as np
 
-
-# 获取当前 __init__.py 文件所在的绝对目录
-# 因为所有的 .dll 现在都和 __init__.py 躺在同一个文件夹里
+# 1. 获取当前包的绝对路径
 package_dir = os.path.dirname(os.path.abspath(__file__))
 
-# 1. 满足 Python 3.8+ 的寻址机制 (给 Python 找 ipopt-3.dll)
-if hasattr(os, 'add_dll_directory'):
-    os.add_dll_directory(package_dir)
+# 2. 【核心修改】针对 Windows 的强力注入
+if sys.platform == 'win32':
+    # 满足 Python 3.8+ 的新机制 (用于加载 _core.pyd 及其直接依赖)
+    if hasattr(os, 'add_dll_directory'):
+        os.add_dll_directory(package_dir)
+    
+    # 满足底层 C++ (LoadLibraryA) 的旧机制 (用于 IPOPT 加载 libhsl.dll)
+    # 我们把包路径强行插到 PATH 的最前面，确保最高优先级
+    os.environ['PATH'] = package_dir + os.pathsep + os.environ.get('PATH', '')
 
-# 2. 满足 C++ 底层的寻址机制 (给 IPOPT 找 libhsl.dll 及其连环依赖)
-os.environ['PATH'] = package_dir + os.pathsep + os.environ.get('PATH', '')
+# 3. 验证一下（调试用，正式版可删）
+print(f"DEBUG: pyipopt package_dir is {package_dir}")
+print(f"DEBUG: Current PATH starts with {os.environ['PATH'][:100]}")
+
 
 # --- 寻址完毕，安全导入底层 C++ 引擎 ---
 # 从 C++ 底层模块中导入真正的 Problem 类
