@@ -11,7 +11,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyipopt"
-version = "0.1.0"
+version = "0.2.0"
 description = "A custom pybind11 wrapper for IPOPT"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -23,5 +23,10 @@ dependencies = [
 # 让 scikit-build-core 知道去哪找 CMakeLists.txt
 cmake.version = ">=3.15"
 ninja.version = ">=1.5"
-# 🚨 新增：告诉打包工具，把同名的纯 Python 文件夹一起塞进 whl 里
+
+# 告诉打包工具，把同名的纯 Python 文件夹及其内容塞进 whl 里
 wheel.packages = ["pyipopt"]
+
+# 核心改动：显式包含文件夹内的所有 DLL 文件
+# 这样就不再需要 MANIFEST.in，只修这一个文件即可
+sdist.include = ["pyipopt/*.dll"]
