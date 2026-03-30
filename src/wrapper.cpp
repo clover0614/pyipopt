@@ -47,6 +47,10 @@ public:
             // 封装层自动替用户开启 L-BFGS，防止 IPOPT 崩溃
             app_->Options()->SetStringValue("hessian_approximation", "limited-memory");
         }
+
+        // 终极防崩溃黑魔法：人为增加一次引用计数！
+        // 这样 IPOPT 就永远不会擅自 delete 这个对象，而是乖乖把它交还给 Python 处理！
+        this->AddRef(nullptr);
     }
 
     virtual ~PyIpoptNLP() {}
@@ -229,7 +233,7 @@ public:
 };
 
 // 宏定义
-PYBIND11_MODULE(pyipopt, m) { // 创建一个名为 pyipopt 的 Python 模块（Module），并在接下来的代码块里，用变量 m 代表这个模块
+PYBIND11_MODULE(_core, m) { // 创建一个名为 _core 的 Python 模块（Module），并在接下来的代码块里，用变量 m 代表这个模块
     // 模块的文档字符串，help(pyipopt) 的返回值
     m.doc() = "Industrial grade IPOPT wrapper with Exact Hessian support";
 
