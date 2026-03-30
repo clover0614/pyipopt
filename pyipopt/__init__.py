@@ -39,7 +39,7 @@ class IPOPTInterface:
             
         n = len(x0)
         
-        # --- 探针与维度获取 ---
+        # --- 维度获取 ---
         dummy_cons = self.cons(x0)
         m = len(dummy_cons) if dummy_cons is not None else 0
 
@@ -72,7 +72,7 @@ class IPOPTInterface:
             hess_jCol = np.array([], dtype=np.int32)
             eval_h_dummy = lambda x, lag, obj_f: np.array([], dtype=np.float64)
 
-        # 🚨 实例化底层的 C++ V8 引擎
+        # 实例化底层的 C++ V8 引擎, 调用cpp文件中包装的模块
         core_nlp = _CoreProblem(
             n, m, 
             x0_np, lb_np, ub_np, cl_np, cu_np, 
@@ -80,11 +80,11 @@ class IPOPTInterface:
             self.obj, self.obj_grad, self.cons, self.cons_jac, eval_h_dummy
         )
 
-        # 🚨 将 Python 层暂存的所有 options 倾倒给 C++ 引擎
+        # 将 Python 层暂存的所有 options 倾倒给 C++ 引擎
         for opt_name, opt_val in self.options.items():
             core_nlp.add_option(opt_name, opt_val)
 
-        # 真正点火！
+        # 真正开始求解
         return core_nlp.solve()
 
 
@@ -111,7 +111,7 @@ def solve_ipopt(x0, obj=None, obj_grad=None, cons=None, cons_jac=None, cons_inde
         'print_level': 5,
         'max_iter': 500,
         'tol': 1e-8,
-        # 'linear_solver': 'ma57', # 确保你的机器里有 ma57，否则请注销这一行！
+        'linear_solver': 'ma57', # 默认的线性求解器
     }
     
     if options is not None:
@@ -120,7 +120,7 @@ def solve_ipopt(x0, obj=None, obj_grad=None, cons=None, cons_jac=None, cons_inde
     for option, value in default_options.items():
         nlp.add_option(option, value)
 
-    # 🚨 满足需求 2：以 nlp.solve(x0) 的形式调用
+    # 以 nlp.solve(x0) 的形式调用
     x_opt, info = nlp.solve(x0)
 
     return x_opt, info
