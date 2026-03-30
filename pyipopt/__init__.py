@@ -21,8 +21,8 @@ if sys.platform == 'win32':
     os.environ['PATH'] = package_dir + os.pathsep + os.environ.get('PATH', '')
 
 # 3. 验证一下（调试用，正式版可删）
-print(f"DEBUG: pyipopt package_dir is {package_dir}")
-print(f"DEBUG: Current PATH starts with {os.environ['PATH'][:100]}")
+# print(f"DEBUG: pyipopt package_dir is {package_dir}")
+# print(f"DEBUG: Current PATH starts with {os.environ['PATH'][:100]}")
 
 
 # --- 寻址完毕，安全导入底层 C++ 引擎 ---
