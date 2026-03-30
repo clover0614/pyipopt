@@ -10,6 +10,7 @@ __pycache__/
 .vs/
 *.obj
 *.dll
+!pyipopt/*.dll   # 除了 pyipopt 文件夹下的 dll，其他的 dll 全部忽略！
 *.lib
 
 # 本地测试脚本
