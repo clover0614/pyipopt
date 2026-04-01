@@ -81,12 +81,24 @@ class IPOPTInterface:
         cu_np = np.zeros(m, dtype=np.float64) if self.cu is None else np.array(self.cu, dtype=np.float64)
 
         # --- 稀疏雅可比坐标 ---
+        # --- 雅可比坐标智能推断 ---
         if self.cons_index is not None:
+            # 1. 高级用户：传了稀疏结构，直接使用
             jac_iRow = np.array(self.cons_index[0], dtype=np.int32)
             jac_jCol = np.array(self.cons_index[1], dtype=np.int32)
+        elif m > 0:
+            # 2. 普通用户：有约束，但没传结构。智能降级为“稠密 (Dense) 雅可比”！
+            # 自动生成所有位置的坐标。
+            # 例如 m=2, n=3，生成:
+            # iRow = [0, 0, 0, 1, 1, 1]
+            # jCol = [0, 1, 2, 0, 1, 2]
+            jac_iRow = np.repeat(np.arange(m), n).astype(np.int32)
+            jac_jCol = np.tile(np.arange(n), m).astype(np.int32)
         else:
+            # 3. 无约束优化：真正的空数组
             jac_iRow = np.array([], dtype=np.int32)
             jac_jCol = np.array([], dtype=np.int32)
+
 
         # --- 海森矩阵占位 ---
         if self.use_exact_hessian:
